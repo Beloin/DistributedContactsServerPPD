@@ -8,8 +8,6 @@ import (
 )
 
 const (
-	CONN_HOST           = "localhost"
-	CONN_PORT           = "3333"
 	CONN_TYPE           = "tcp"
 	DEFAULT_BUFFER_RECV = 256
 )
@@ -31,15 +29,28 @@ func Listen(host string, port string) {
 			os.Exit(1)
 		}
 
-    // TODO: Handle in another thread?
-    // How to handle here and save data here?
-    // We can create a map and add the host + port as key
-    // then in the request it should return a name of this server
-    // Maybe even read the first information regarding the SERVERxCLIENT thing
-    // listenClient(clientName);
-    // listenServer(serverName);
-    // Add callbacks too?
+		// TODO: Handle in another thread?
+		// How to handle here and save data here?
+		// We can create a map and add the host + port as key
+		// then in the request it should return a name of this server
+		// Maybe even read the first information regarding the SERVERxCLIENT thing
+		// listenClient(clientName);
+		// listenServer(serverName);
+		// Add callbacks too?
+    // addr := conn.LocalAddr().String()
 		go handleRequest(conn)
+	}
+}
+
+// Server loop
+func handleServer(name string) {
+	for {
+	}
+}
+
+// Client loop
+func handleClient(name string) {
+	for {
 	}
 }
 
@@ -50,10 +61,10 @@ func handleRequest(conn net.Conn) {
 	// Make a buffer to hold incoming data.
 	buf := make([]byte, 1024)
 
-	// TODO: Make a "readall" like property
-	reqLen, err := conn.Read(buf)
+	reqLen, bytes, err := readAll(conn)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
+		conn.Close()
 	}
 	conn.Write([]byte("Message received."))
 	conn.Close()
