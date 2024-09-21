@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+  "distributed_contacts_server/internal/parser"
 )
 
 const (
@@ -37,7 +38,28 @@ func Listen(host string, port string) {
 		// listenClient(clientName);
 		// listenServer(serverName);
 		// Add callbacks too?
-    // addr := conn.LocalAddr().String()
+		addr := conn.LocalAddr().String()
+		read, buf, err := readAll(conn, 1)
+		if err != nil || read < 1 {
+			fmt.Println("Could not get identity from" + addr)
+			conn.Close()
+			continue
+		}
+
+		identity := buf[0]
+		read, buf, err = readAll(conn, 256)
+		if err != nil || read != 256 {
+			fmt.Println("Could not get name from" + addr)
+			conn.Close()
+			continue
+		}
+
+    name := parser.ReadTillNull(buf)
+		if identity == 1 {
+		} else { // Treat if != 2?
+
+		}
+
 		go handleRequest(conn)
 	}
 }

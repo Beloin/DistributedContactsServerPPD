@@ -17,9 +17,10 @@
 
 - 1° byte:
   - 1 == "Update"
-  - 2 == "HeartBeat"
-  - 3 == "UpdateClock" (OPTIONAL)
-  - 4 == "AskForUpdate"
+  - 2 == "Delete"
+  - 3 == "HeartBeat"
+  - 4 == "UpdateClock" (OPTIONAL)
+  - 5 == "AskForUpdate"
 
 1. Update a contact:
 
@@ -30,7 +31,16 @@
 | ContactName | 256 | "Juan" |
 | PhoneNumber | 20 | "85999999999" |
 
-2. Hearbeat
+2. Delete a contact:
+
+| Name | Bytes | Example |
+| --------------- | --------------- | --------------- |
+| Clock | 4 | 11 |
+| UserName | 256 | "Beloin" |
+| ContactName | 256 | "Juan" |
+
+
+3. Hearbeat
 
 | Name | Bytes | Example |
 | --------------- | --------------- | --------------- |
@@ -43,13 +53,13 @@ If __My Server's__ Clock >= __Other Server's__ Clock
 If __My Server's__ Clock < __Other Server's__ Clock
   - Update my clock and keep listening.  
 
-3. UpdateClock (OPTIONAL)
+4. UpdateClock (OPTIONAL)
 
 | Name | Bytes | Example |
 | --------------- | --------------- | --------------- |
 | Clock | 4 | 11 |
 
-4. AskForUpdate
+5. AskForUpdate
 
 In this scenario, __My Server__ will send all contacts with the following structure:
 
@@ -71,7 +81,8 @@ And then send for each contat a "Update" request:
 
 - 1° byte:
   - 1 == "Update"
-  - 2 == "ListAll"
+  - 2 == "Delete"
+  - 3 == "ListAll"
 
 1. Update
 
@@ -81,7 +92,15 @@ And then send for each contat a "Update" request:
 | ContactName | 256 | "Juan" |
 | PhoneNumber | 20 | "85999999999" |
 
-2. ListAll
+2. Delete
+
+| Name | Bytes | Example |
+| --------------- | --------------- | --------------- |
+| UserName | 256 | "Beloin" |
+| ContactName | 256 | "Juan" |
+
+
+3. ListAll
 
 Server will send:
 
