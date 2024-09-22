@@ -88,7 +88,6 @@ And then send for each contat a "Update" request:
 
 | Name | Bytes | Example |
 | --------------- | --------------- | --------------- |
-| UserName | 256 | "Beloin" |
 | ContactName | 256 | "Juan" |
 | PhoneNumber | 20 | "85999999999" |
 
@@ -96,7 +95,6 @@ And then send for each contat a "Update" request:
 
 | Name | Bytes | Example |
 | --------------- | --------------- | --------------- |
-| UserName | 256 | "Beloin" |
 | ContactName | 256 | "Juan" |
 
 
@@ -112,7 +110,6 @@ And then send for each contact is send:
 
 | Name | Bytes | Example |
 | --------------- | --------------- | --------------- |
-| UserName | 256 | "Beloin" |
 | ContactName | 256 | "Juan" |
 | PhoneNumber | 20 | "85999999999" |
 

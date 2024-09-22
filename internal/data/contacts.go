@@ -34,6 +34,7 @@ func AddClient(name string) {
 // But create other function, so in `CompareAndUpdateContact` we don't end
 // in an infinite loop
 // The same for delete etc
+// Adds or update contact for given UserName
 func AddContact(name string, contactName string, number string) {
 	now := clock.CurrentClock.Add(1)
 	m, _ := ContactsMap.Load(name)

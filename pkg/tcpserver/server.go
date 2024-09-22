@@ -144,14 +144,23 @@ func clientLoop(name string, conn net.Conn) {
 			return
 		}
 
+		// TODO: After recv each, send for other servers the same data
 		command := buff[0]
 		switch command {
 		case 1:
-			err = recvClientUpdateCommand(name, conn)
+			err = recvClientUpdateCommand(name, &conn)
 		case 2:
+			err = recvClientDeleteCommand(name, &conn)
 		case 3:
+			err = recvClientListAllCommand(name, &conn)
 		default:
 			fmt.Printf("[CLIENT](%s) Command not implemented\n", name)
+		}
+
+		if err != nil {
+			fmt.Printf("[SERVER](%s) Lost connection to server\n", name)
+			data.Disconnect(name)
+			return
 		}
 	}
 }
@@ -258,5 +267,37 @@ func recvServerAskForUpdateCommand(conn *net.Conn) error {
 	return nil
 }
 
-func recvClientUpdateCommand(name string, conn *net.Conn) {
+func recvClientUpdateCommand(name string, conn *net.Conn) error {
+	_, buff, err := readAll(*conn, 256)
+	if err != nil {
+		return err
+	}
+	contactName := parser.ReadTillNull(buff)
+
+	_, buff, err = readAll(*conn, 10)
+	if err != nil {
+		return err
+	}
+	number := parser.ReadTillNull(buff)
+
+	data.AddContact(name, contactName, number)
+
+	return nil
+}
+
+func recvClientDeleteCommand(name string, conn *net.Conn) error {
+	_, buff, err := readAll(*conn, 256)
+	if err != nil {
+		return err
+	}
+	contactName := parser.ReadTillNull(buff)
+
+	data.RemoveContact(name, contactName)
+
+	return nil
+}
+
+func recvClientListAllCommand(name string, conn *net.Conn) error {
+	// TODO: Return the lis of clients
+	return nil
 }

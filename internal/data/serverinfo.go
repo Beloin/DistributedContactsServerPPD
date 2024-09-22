@@ -63,3 +63,6 @@ func Pong(name string, otherClock uint32, status bool) {
 		}
 	}
 }
+
+func Broadcast(userName string, contact *Contact) {
+}
