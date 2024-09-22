@@ -115,7 +115,7 @@ func CompareAndDeleteContact(name string, contactName string, number string, oth
 	}
 
 	innerContacts := userMap.(map[string]*Contact)
-	val, exists := innerContacts[contactName]
+	_, exists = innerContacts[contactName]
   if exists {
     delete(innerContacts, contactName)
     ContactsMap.Store(name, innerContacts)
