@@ -3,6 +3,8 @@ package data
 import (
 	"distributed_contacts_server/internal/clock"
 	"fmt"
+	"maps"
+	"slices"
 	"sync"
 )
 
@@ -49,4 +51,26 @@ func AddContact(name string, contactName string, number string) {
 	}
 
 	ContactsMap.Store(name, contactMap)
+}
+
+func RemoveContact(name string, contactName string) {
+	now := clock.CurrentClock.Load()
+	storedMap, _ := ContactsMap.Load(name)
+
+	contactMap := storedMap.(map[string]*Contact)
+	val, ok := contactMap[contactName]
+
+	if ok {
+		if val.savedTime < uint32(now) {
+			delete(contactMap, contactName)
+		}
+	}
+
+	ContactsMap.Store(name, contactMap)
+}
+
+func ListAll(name string) []*Contact {
+	storedMap, _ := ContactsMap.Load(name)
+	contactMap := storedMap.(map[string]*Contact)
+	return slices.Collect(maps.Values(contactMap))
 }

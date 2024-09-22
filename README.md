@@ -108,7 +108,7 @@ Server will send:
 | --------------- | --------------- | --------------- |
 | ContactLen | 4 | 11 |
 
-And then send for each contact an "Update" request:
+And then send for each contact is send:
 
 | Name | Bytes | Example |
 | --------------- | --------------- | --------------- |

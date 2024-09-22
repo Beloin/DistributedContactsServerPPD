@@ -21,5 +21,5 @@ type ServerInfo struct {
 // Map structured with `ServerName`: ServerInfo{}
 var ServerMap = new(sync.Map)
 
-func UpdateServer(host string, port string, currentTime int32) {
+func UpdateServer(host string, port string, currentTime uint32) {
 }
