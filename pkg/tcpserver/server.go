@@ -2,10 +2,13 @@ package tcpserver
 
 import (
 	"bytes"
+	"distributed_contacts_server/internal/clock"
+	"distributed_contacts_server/internal/data"
+	"distributed_contacts_server/internal/parser"
 	"fmt"
 	"net"
 	"os"
-  "distributed_contacts_server/internal/parser"
+	"time"
 )
 
 const (
@@ -54,50 +57,112 @@ func Listen(host string, port string) {
 			continue
 		}
 
-    name := parser.ReadTillNull(buf)
+		name := parser.ReadTillNull(buf)
+		// Go routine to ping and other to listen
 		if identity == 1 {
+			go serverLoop(name, conn)
+			go pingServerLoop(name, conn)
 		} else { // Treat if != 2?
-
+			go clientLoop(name, conn)
 		}
-
-		go handleRequest(conn)
 	}
 }
 
 // Server loop
-func handleServer(name string) {
+func serverLoop(name string, conn net.Conn) {
 	for {
+		n, buff, err := readAll(conn, 1)
+		if n < 1 || err != nil {
+			fmt.Printf("[SERVER](%s) Lost connection to server\n", name)
+			data.Disconnect(name)
+			return
+		}
+
+		switch buff[0] {
+		case 1:
+			err = recvServerUpdateCommand(&conn)
+		case 2:
+			err = recvServerDeleteCommand(&conn)
+		case 3:
+			err = recvServerPingCommand(name, &conn)
+		case 4:
+			// TODO: Implement ClockUpdate
+		case 5:
+			err = recvServerAskForUpdateCommand(&conn)
+		default:
+			fmt.Printf("[SERVER](%s) Undefined command", name)
+		}
+
+		if err != nil {
+			fmt.Printf("[SERVER](%s) Lost connection to server\n", name)
+			data.Disconnect(name)
+			return
+		}
+	}
+}
+
+// Function to ping server sending heartbeat
+func pingServerLoop(name string, conn net.Conn) {
+	retries := 0
+	for {
+		time.Sleep(time.Second * 5)
+		n, err := conn.Write([]byte{3})
+
+		if n < 1 || err != nil {
+			retries++
+			fmt.Printf("[SERVER](%s) Could not ping server\n", name)
+
+			if retries > 3 {
+				return
+			}
+
+			continue
+		}
+
+		bts := make([]byte, 4)
+		parser.Parse32Bits(clock.CurrentClock.Load(), &bts)
+		n, err = conn.Write(bts)
+
+		if n < 1 || err != nil {
+			retries++
+			fmt.Printf("[SERVER](%s) Could not ping server\n", name)
+
+			if retries > 3 {
+				return
+			}
+
+		}
 	}
 }
 
 // Client loop
-func handleClient(name string) {
+func clientLoop(name string, conn net.Conn) {
 	for {
+		n, buff, err := readAll(conn, 1)
+		if n < 1 || err != nil {
+			fmt.Printf("[CLIENT](%s) Lost connection\n", name)
+			return
+		}
+
+		command := buff[0]
+		switch command {
+		case 1:
+			err = recvClientUpdateCommand(name, conn)
+		case 2:
+		case 3:
+		default:
+			fmt.Printf("[CLIENT](%s) Command not implemented\n", name)
+		}
 	}
 }
 
-// Handles incoming requests.
-// TODO: Add here validation for CLIENT and SERVER
-// Add param entry to be the entry of the connection map?
-func handleRequest(conn net.Conn) {
-	// Make a buffer to hold incoming data.
-	buf := make([]byte, 1024)
-
-	reqLen, bytes, err := readAll(conn)
-	if err != nil {
-		fmt.Println("Error reading:", err.Error())
-		conn.Close()
-	}
-	conn.Write([]byte("Message received."))
-	conn.Close()
-}
-
-func readAll(conn net.Conn, len int) (int, []byte, error) {
+func readAll(conn net.Conn, size int) (int, []byte, error) {
 	var received int
 
 	// buffer := bytes.NewBuffer(nil)
 	buffer := new(bytes.Buffer)
 	for {
+		// TODO: Test this
 		chunk := make([]byte, DEFAULT_BUFFER_RECV)
 		read, err := conn.Read(chunk)
 		if err != nil {
@@ -107,10 +172,91 @@ func readAll(conn net.Conn, len int) (int, []byte, error) {
 		received += read
 		buffer.Write(chunk)
 
-		if read == 0 || read < DEFAULT_BUFFER_RECV {
+		if read == 0 || read < size {
 			break
 		}
 	}
 
 	return received, buffer.Bytes(), nil
+}
+
+func recvServerUpdateCommand(conn *net.Conn) error {
+	_, buff, err := readAll(*conn, 4)
+	if err != nil {
+		return err
+	}
+	serverClock := parser.ParseTo32Bits(buff)
+
+	_, buff, err = readAll(*conn, 256)
+	if err != nil {
+		return err
+	}
+	name := parser.ReadTillNull(buff)
+
+	_, buff, err = readAll(*conn, 256)
+	if err != nil {
+		return err
+	}
+	contactName := parser.ReadTillNull(buff)
+
+	_, buff, err = readAll(*conn, 10)
+	if err != nil {
+		return err
+	}
+	number := parser.ReadTillNull(buff)
+
+	data.CompareAndUpdateContact(name, contactName, number, serverClock)
+
+	return nil
+}
+
+func recvServerDeleteCommand(conn *net.Conn) error {
+	_, buff, err := readAll(*conn, 4)
+	if err != nil {
+		return err
+	}
+	serverClock := parser.ParseTo32Bits(buff)
+
+	_, buff, err = readAll(*conn, 256)
+	if err != nil {
+		return err
+	}
+	name := parser.ReadTillNull(buff)
+
+	_, buff, err = readAll(*conn, 256)
+	if err != nil {
+		return err
+	}
+	contactName := parser.ReadTillNull(buff)
+
+	data.CompareAndDeleteContact(name, contactName, serverClock)
+
+	return nil
+}
+
+func recvServerPingCommand(name string, conn *net.Conn) error {
+	_, buff, err := readAll(*conn, 1)
+	if err != nil {
+		return err
+	}
+	status := parser.ParseTo32Bits(buff)
+
+	_, buff, err = readAll(*conn, 4)
+	if err != nil {
+		return err
+	}
+	serverClock := parser.ParseTo32Bits(buff)
+
+	// TODO: See current clock and update external server if My clock >>
+	data.Pong(name, serverClock, status == 1)
+
+	return nil
+}
+
+func recvServerAskForUpdateCommand(conn *net.Conn) error {
+	// TODO: Implement recvServerAskForUpdateCommand
+	return nil
+}
+
+func recvClientUpdateCommand(name string, conn *net.Conn) {
 }

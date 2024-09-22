@@ -1,6 +1,7 @@
 package data
 
 import (
+	"distributed_contacts_server/internal/clock"
 	"sync"
 	"time"
 )
@@ -16,14 +17,14 @@ type ServerInfo struct {
 	Host          string
 	Port          string
 	currentTime   uint32
+	status        bool
 }
 
 // Map structured with `ServerName`: *ServerInfo{}
 var ServerMap = new(sync.Map)
 
-func UpdateServer(host string, port string, currentTime uint32) {
-	fullname := host + ":" + port
-	storedMap, exists := ContactsMap.Load(fullname)
+func UpdateServer(host string, port string, name string, currentTime uint32) {
+	storedMap, exists := ContactsMap.Load(name)
 	if exists {
 		serverInfo := storedMap.(*ServerInfo)
 		serverInfo.lastHeartbeat = time.Now()
@@ -35,7 +36,30 @@ func UpdateServer(host string, port string, currentTime uint32) {
 			Host:          host,
 			Port:          port,
 			currentTime:   currentTime,
+			status:        true,
 		}
-		ContactsMap.Store(fullname, serverInfo)
+		ContactsMap.Store(name, serverInfo)
+	}
+}
+
+// TODO: Add client event when server Disconnect
+func Disconnect(name string) {
+	storedMap, exists := ContactsMap.Load(name)
+	if exists {
+		serverInfo := storedMap.(*ServerInfo)
+		serverInfo.status = false
+	}
+}
+
+func Pong(name string, otherClock uint32, status bool) {
+	storedMap, exists := ContactsMap.Load(name)
+	if exists {
+		serverInfo := storedMap.(*ServerInfo)
+		serverInfo.lastHeartbeat = time.Now()
+		serverInfo.currentTime = otherClock
+
+		if otherClock > clock.CurrentClock.Load() {
+			clock.CurrentClock.Store(otherClock)
+		}
 	}
 }

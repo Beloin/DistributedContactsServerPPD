@@ -103,7 +103,7 @@ func CompareAndUpdateContact(name string, contactName string, number string, oth
 	AddContact(name, contactName, number)
 }
 
-func CompareAndDeleteContact(name string, contactName string, number string, otherTime uint32) {
+func CompareAndDeleteContact(name string, contactName string, otherTime uint32) {
 	if otherTime > clock.CurrentClock.Load() {
 		clock.CurrentClock.Store(otherTime)
 	}
