@@ -14,14 +14,13 @@ type Contact struct {
 	savedTime uint32
 }
 
-// Map structured with `UserName`: { ContactName: Contact{} }
+// Map structured with `UserName`: { ContactName: *Contact{} }
 var ContactsMap = new(sync.Map)
-
-// TODO: Make a broadcast when changing a contact
 
 func AddClient(name string) {
 	internalMap := make(map[string]*Contact)
 	// Explicit not using pointers to map so we can re-store all user data on update
+
 	_, l := ContactsMap.LoadOrStore(name, internalMap)
 
 	if l {
@@ -31,6 +30,10 @@ func AddClient(name string) {
 	}
 }
 
+// TODO: Make a broadcast when changing a contact
+// But create other function, so in `CompareAndUpdateContact` we don't end
+// in an infinite loop
+// The same for delete etc
 func AddContact(name string, contactName string, number string) {
 	now := clock.CurrentClock.Add(1)
 	m, _ := ContactsMap.Load(name)
@@ -73,4 +76,48 @@ func ListAll(name string) []*Contact {
 	storedMap, _ := ContactsMap.Load(name)
 	contactMap := storedMap.(map[string]*Contact)
 	return slices.Collect(maps.Values(contactMap))
+}
+
+func CompareAndUpdateContact(name string, contactName string, number string, otherTime uint32) {
+	if otherTime > clock.CurrentClock.Load() {
+		clock.CurrentClock.Store(otherTime)
+	}
+
+	userMap, exists := ContactsMap.Load(name)
+
+	if !exists {
+		AddClient(name)
+		AddContact(name, contactName, number)
+		return
+	}
+
+	contactMap := userMap.(map[string]*Contact)
+	val, exists := contactMap[contactName]
+
+	if exists {
+		if val.savedTime >= otherTime {
+			return
+		}
+	}
+
+	AddContact(name, contactName, number)
+}
+
+func CompareAndDeleteContact(name string, contactName string, number string, otherTime uint32) {
+	if otherTime > clock.CurrentClock.Load() {
+		clock.CurrentClock.Store(otherTime)
+	}
+	userMap, exists := ContactsMap.Load(name)
+
+	if !exists {
+		AddClient(name)
+		return
+	}
+
+	innerContacts := userMap.(map[string]*Contact)
+	val, exists := innerContacts[contactName]
+  if exists {
+    delete(innerContacts, contactName)
+    ContactsMap.Store(name, innerContacts)
+  }
 }
