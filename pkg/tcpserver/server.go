@@ -308,7 +308,7 @@ func recvServerAskForUpdateCommand(conn *net.Conn) error {
 	for _, contactAmount := range all {
 		var buffer []byte
 		for _, contact := range contactAmount.Contacts {
-      // Contact time
+			// Contact time
 			parser.Parse32Bits(contact.SavedTime, &bts)
 			_, err := connection.Write(bts)
 			if err != nil {
@@ -385,6 +385,42 @@ func recvClientDeleteCommand(name string, conn *net.Conn) error {
 }
 
 func recvClientListAllCommand(name string, conn *net.Conn) error {
-	// TODO: Implement
+	all := data.ListAllByName(name)
+	amount := len(all)
+
+	connection := *conn
+	bts := make([]byte, 4)
+	parser.Parse32Bits(uint32(amount), &bts)
+	_, err := connection.Write(bts)
+	if err != nil {
+		return err
+	}
+
+  var buffer []byte
+	for _, contact := range all {
+		// Contact Name
+		contactName := contact.Name
+		err = parser.ParseString(contactName, &buffer)
+		if err != nil {
+			return err
+		}
+		_, err = connection.Write(buffer)
+		if err != nil {
+			return err
+		}
+
+		// Number
+		number := contact.Number
+		err = parser.ParseLenString(number, &buffer, 20)
+		if err != nil {
+			return err
+		}
+		_, err = connection.Write(buffer)
+		if err != nil {
+			return err
+		}
+
+	}
+
 	return nil
 }
