@@ -58,11 +58,12 @@ func main() {
 
 	var host string
 	var port string
-	if server == 1 {
+	switch server {
+	case 1:
 		host, port = getHostAndPort(data.SERVER_1)
-	} else if server == 2 {
+	case 2:
 		host, port = getHostAndPort(data.SERVER_2)
-	} else if server == 3 {
+	case 3:
 		host, port = getHostAndPort(data.SERVER_3)
 	}
 

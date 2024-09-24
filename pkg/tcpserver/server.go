@@ -14,7 +14,6 @@ import (
 
 const (
 	CONN_TYPE           = "tcp"
-	DEFAULT_BUFFER_RECV = 256
 )
 
 func Listen(host string, port string) {
@@ -34,14 +33,6 @@ func Listen(host string, port string) {
 			os.Exit(1)
 		}
 
-		// TODO: Handle in another thread?
-		// How to handle here and save data here?
-		// We can create a map and add the host + port as key
-		// then in the request it should return a name of this server
-		// Maybe even read the first information regarding the SERVERxCLIENT thing
-		// listenClient(clientName);
-		// listenServer(serverName);
-		// Add callbacks too?
 		addr := conn.RemoteAddr().String()
 		fmt.Printf("[LISTEN] Recieved connection from %s\n", addr)
 
@@ -60,7 +51,6 @@ func Listen(host string, port string) {
 			continue
 		}
 
-		// TODO: After reading the other name, send also `my name`
 		fmt.Println("[LISTEN] Sending my name to " + addr)
 		var buffer []byte
 		_ = parser.ParseString(host, &buffer)
@@ -73,6 +63,7 @@ func Listen(host string, port string) {
 
 		fmt.Printf("[LISTEN] Handshake done with %s\n", addr)
 		name := parser.ReadTillNull(buf)
+
 		// Go routine to ping and other to listen
 		if identity == 1 {
 			hostAndPort := strings.Split(addr, ":")
@@ -87,7 +78,6 @@ func Listen(host string, port string) {
 }
 
 // Server loop
-// TODO: How to call this from other server in "Connect" method
 func serverLoop(name string, conn net.Conn) {
 	for {
 		n, buff, err := readAll(conn, 1)
@@ -289,7 +279,6 @@ func recvServerPingCommand(name string, conn *net.Conn) error {
 	}
 	serverClock := parser.ParseTo32Bits(buff)
 
-	// TODO: See current clock and update external server if My clock >>
 	data.Pong(name, serverClock, status == 1)
 
 	return nil
@@ -354,6 +343,7 @@ func recvServerAskForUpdateCommand(conn *net.Conn) error {
 	return nil
 }
 
+// TODO: Add callback to send all data to other servers
 func recvClientUpdateCommand(name string, conn *net.Conn) error {
 	_, buff, err := readAll(*conn, 256)
 	if err != nil {
@@ -396,7 +386,7 @@ func recvClientListAllCommand(name string, conn *net.Conn) error {
 		return err
 	}
 
-  var buffer []byte
+	var buffer []byte
 	for _, contact := range all {
 		// Contact Name
 		contactName := contact.Name
