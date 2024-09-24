@@ -36,6 +36,25 @@ func ParseString(str string, buffer *[]byte) error {
 	return nil
 }
 
+func ParseLenString(str string, buffer *[]byte, l int) error {
+	n := len(str)
+	if n > l{
+		return errors.New("Length greater then " + string(l))
+	}
+
+	var strBuilder strings.Builder
+	strBuilder.WriteString(str)
+
+	// Needs null ended string
+	for i := l; i >= n; i-- {
+		strBuilder.WriteByte('\000')
+	}
+
+	(*buffer) = []byte(strBuilder.String())
+	return nil
+}
+
+
 func ParseTo32Bits(buffer []byte) uint32 {
 	return uint32(buffer[0])<<24 |
 		uint32(buffer[1])<<16 |

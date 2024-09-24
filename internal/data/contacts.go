@@ -73,7 +73,26 @@ func RemoveContact(name string, contactName string) {
 	ContactsMap.Store(name, contactMap)
 }
 
-func ListAll(name string) []*Contact {
+type ContactAmount struct {
+	Name     string
+	Contacts []*Contact
+}
+
+func ListAll() ([]ContactAmount, int) {
+	fullAmount := 0
+	var contactAmountSlice []ContactAmount
+	ContactsMap.Range(func(key, value any) bool {
+		name := key.(string)
+		cont := ListAllByName(name)
+		fullAmount += len(cont)
+		contactAmountSlice = append(contactAmountSlice, ContactAmount{Name: name, Contacts: cont})
+		return true
+	})
+
+	return contactAmountSlice, fullAmount
+}
+
+func ListAllByName(name string) []*Contact {
 	storedMap, _ := ContactsMap.Load(name)
 	contactMap := storedMap.(map[string]*Contact)
 	return slices.Collect(maps.Values(contactMap))
@@ -117,8 +136,8 @@ func CompareAndDeleteContact(name string, contactName string, otherTime uint32) 
 
 	innerContacts := userMap.(map[string]*Contact)
 	_, exists = innerContacts[contactName]
-  if exists {
-    delete(innerContacts, contactName)
-    ContactsMap.Store(name, innerContacts)
-  }
+	if exists {
+		delete(innerContacts, contactName)
+		ContactsMap.Store(name, innerContacts)
+	}
 }

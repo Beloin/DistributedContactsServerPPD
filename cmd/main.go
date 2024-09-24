@@ -27,7 +27,7 @@ func remove(slice []string, item string) ([]string, bool) {
 
 var otherServers = []string{data.SERVER_1, data.SERVER_2, data.SERVER_3}
 
-func usageAndExit() {
+func showUsageAndExit() {
 	fmt.Println("Usage: server server={1,2,3}")
 	os.Exit(1)
 }
@@ -47,13 +47,13 @@ func getHostAndPort(serverName string) (string, string) {
 
 func main() {
 	if len(os.Args) < 2 {
-		usageAndExit()
+		showUsageAndExit()
 	}
 
 	serverOption := os.Args[1]
 	server, err := strconv.Atoi(strings.Split(serverOption, "=")[1])
 	if err != nil {
-		usageAndExit()
+		showUsageAndExit()
 	}
 
 	var host string

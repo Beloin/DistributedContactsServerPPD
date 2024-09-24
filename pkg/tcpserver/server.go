@@ -66,7 +66,7 @@ func Listen(host string, port string) {
 		_ = parser.ParseString(host, &buffer)
 		_, err = conn.Write(buffer)
 		if err != nil {
-      fmt.Println("[LISTEN] Could not send name to " + addr)
+			fmt.Println("[LISTEN] Could not send name to " + addr)
 			conn.Close()
 			continue
 		}
@@ -296,7 +296,48 @@ func recvServerPingCommand(name string, conn *net.Conn) error {
 }
 
 func recvServerAskForUpdateCommand(conn *net.Conn) error {
-	// TODO: Implement recvServerAskForUpdateCommand
+	// TODO: Return the lis of clients
+	all, fullAmount := data.ListAll()
+	connection := *conn
+	bts := make([]byte, 4)
+	parser.Parse32Bits(uint32(fullAmount), &bts)
+	_, err := connection.Write(bts)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range all {
+		parser.Parse32Bits(clock.CurrentClock.Load(), &bts)
+		_, err := connection.Write(bts)
+		if err != nil {
+			return err
+		}
+
+		var buffer []byte
+
+		err = parser.ParseString(v.Name, &buffer)
+		if err != nil {
+			return err
+		}
+		_, err = connection.Write(buffer)
+		if err != nil {
+			return err
+		}
+
+		_, buff, err := readAll(*conn, 256)
+		if err != nil {
+			return err
+		}
+		contactName := parser.ReadTillNull(buff)
+
+		_, buff, err = readAll(*conn, 20)
+		if err != nil {
+			return err
+		}
+		number := parser.ReadTillNull(buff)
+
+	}
+
 	return nil
 }
 
@@ -307,7 +348,7 @@ func recvClientUpdateCommand(name string, conn *net.Conn) error {
 	}
 	contactName := parser.ReadTillNull(buff)
 
-	_, buff, err = readAll(*conn, 10)
+	_, buff, err = readAll(*conn, 20)
 	if err != nil {
 		return err
 	}
@@ -331,6 +372,6 @@ func recvClientDeleteCommand(name string, conn *net.Conn) error {
 }
 
 func recvClientListAllCommand(name string, conn *net.Conn) error {
-	// TODO: Return the lis of clients
-	return nil
+	// TODO: Implement 
+  return nil
 }
