@@ -2,6 +2,8 @@ package data
 
 import (
 	"distributed_contacts_server/internal/clock"
+	"distributed_contacts_server/internal/parser"
+	"net"
 	"sync"
 	"time"
 )
@@ -19,6 +21,7 @@ type ServerInfo struct {
 	Port          string
 	currentTime   uint32
 	status        bool
+	conn          net.Conn
 }
 
 // Map structured with `ServerName`: *ServerInfo{}
@@ -43,7 +46,7 @@ func UpdateServer(host string, port string, name string, currentTime uint32) {
 	}
 }
 
-func AddServer(host string, port string, name string) {
+func AddServer(host string, port string, name string, conn net.Conn) {
 	storedMap, exists := ServerMap.Load(name)
 	if exists {
 		serverInfo := storedMap.(*ServerInfo)
@@ -56,11 +59,11 @@ func AddServer(host string, port string, name string) {
 			Port:          port,
 			currentTime:   0,
 			status:        true,
+			conn:          conn,
 		}
-    ServerMap.Store(name, serverInfo)
+		ServerMap.Store(name, serverInfo)
 	}
 }
-
 
 // TODO: Add client event when server Disconnect
 func Disconnect(name string) {
@@ -84,5 +87,57 @@ func Pong(name string, otherClock uint32, status bool) {
 	}
 }
 
-func Broadcast(userName string, contact *Contact) {
+func Broadcast(userName string, contact *Contact) error {
+	var err error = nil
+	var buffer []byte
+	ServerMap.Range(func(key, value any) bool {
+		server := value.(*ServerInfo)
+		if !server.status {
+			return true
+		}
+
+		// Clock
+		bts := make([]byte, 4)
+		parser.Parse32Bits(contact.SavedTime, &bts)
+		_, err = server.conn.Write(bts)
+		if err != nil {
+			return false
+		}
+
+		// Username
+		err = parser.ParseString(userName, &buffer)
+		if err != nil {
+			return false
+		}
+		_, err = server.conn.Write(buffer)
+		if err != nil {
+			return false
+		}
+
+		// Contact Name
+		contactName := contact.Name
+		err = parser.ParseString(contactName, &buffer)
+		if err != nil {
+			return false
+		}
+		_, err = server.conn.Write(buffer)
+		if err != nil {
+			return false
+		}
+
+		// Number
+		number := contact.Number
+		err = parser.ParseLenString(number, &buffer, 20)
+		if err != nil {
+			return false
+		}
+		_, err = server.conn.Write(buffer)
+		if err != nil {
+			return false
+		}
+
+		return true
+	})
+
+	return err
 }

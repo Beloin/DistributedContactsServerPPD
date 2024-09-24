@@ -22,7 +22,7 @@ func Connect(host string, port string, servername string) {
 	realServerName, err := initialConnectionSetup(servername, &conn, otherName)
 	fmt.Printf("[CONNECT][%s] Handshake done with %s! Connected with name %s\n", servername, otherName, realServerName)
 
-	data.AddServer(host, port, realServerName)
+	data.AddServer(host, port, realServerName, conn)
 
 	// TODO: Send an ListAll request to server
 	go initialPingServerLoop(servername, conn, otherName)

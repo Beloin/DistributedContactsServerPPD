@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	CONN_TYPE           = "tcp"
+	CONN_TYPE = "tcp"
 )
 
 func Listen(host string, port string) {
@@ -68,7 +68,7 @@ func Listen(host string, port string) {
 		if identity == 1 {
 			hostAndPort := strings.Split(addr, ":")
 			otherHost, otherPort := hostAndPort[0], hostAndPort[1]
-			data.AddServer(otherHost, otherPort, name)
+			data.AddServer(otherHost, otherPort, name, conn)
 			go serverLoop(name, conn)
 			go pingServerLoop(name, conn)
 		} else { // Treat if != 2?
@@ -230,7 +230,7 @@ func recvServerUpdateCommand(conn *net.Conn) error {
 	}
 	contactName := parser.ReadTillNull(buff)
 
-	_, buff, err = readAll(*conn, 10)
+	_, buff, err = readAll(*conn, 20)
 	if err != nil {
 		return err
 	}
@@ -343,7 +343,6 @@ func recvServerAskForUpdateCommand(conn *net.Conn) error {
 	return nil
 }
 
-// TODO: Add callback to send all data to other servers
 func recvClientUpdateCommand(name string, conn *net.Conn) error {
 	_, buff, err := readAll(*conn, 256)
 	if err != nil {
@@ -357,7 +356,8 @@ func recvClientUpdateCommand(name string, conn *net.Conn) error {
 	}
 	number := parser.ReadTillNull(buff)
 
-	data.AddContact(name, contactName, number)
+	newContact := data.AddContact(name, contactName, number)
+	data.Broadcast(name, newContact)
 
 	return nil
 }

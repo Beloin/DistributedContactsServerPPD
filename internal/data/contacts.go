@@ -35,17 +35,18 @@ func AddClient(name string) {
 // in an infinite loop
 // The same for delete etc
 // Adds or update contact for given UserName
-func AddContact(name string, contactName string, number string) {
+func AddContact(name string, contactName string, number string) *Contact {
 	now := clock.CurrentClock.Add(1)
 	m, _ := ContactsMap.Load(name)
 	// TODO: Treat when there's no value for `name`
 
 	contactMap := m.(map[string]*Contact)
+	var newCon *Contact
 	val, ok := contactMap[contactName]
 	if ok {
 		val.Number = number
 	} else {
-		newCon := new(Contact)
+		newCon = new(Contact)
 		*newCon = Contact{
 			Name:      contactName,
 			Number:    number,
@@ -55,6 +56,8 @@ func AddContact(name string, contactName string, number string) {
 	}
 
 	ContactsMap.Store(name, contactMap)
+
+	return newCon
 }
 
 func RemoveContact(name string, contactName string) {
