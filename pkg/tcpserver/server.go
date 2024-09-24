@@ -296,7 +296,6 @@ func recvServerPingCommand(name string, conn *net.Conn) error {
 }
 
 func recvServerAskForUpdateCommand(conn *net.Conn) error {
-	// TODO: Return the lis of clients
 	all, fullAmount := data.ListAll()
 	connection := *conn
 	bts := make([]byte, 4)
@@ -306,35 +305,49 @@ func recvServerAskForUpdateCommand(conn *net.Conn) error {
 		return err
 	}
 
-	for _, v := range all {
-		parser.Parse32Bits(clock.CurrentClock.Load(), &bts)
-		_, err := connection.Write(bts)
-		if err != nil {
-			return err
-		}
-
+	for _, contactAmount := range all {
 		var buffer []byte
+		for _, contact := range contactAmount.Contacts {
+      // Contact time
+			parser.Parse32Bits(contact.SavedTime, &bts)
+			_, err := connection.Write(bts)
+			if err != nil {
+				return err
+			}
 
-		err = parser.ParseString(v.Name, &buffer)
-		if err != nil {
-			return err
-		}
-		_, err = connection.Write(buffer)
-		if err != nil {
-			return err
-		}
+			// Username
+			err = parser.ParseString(contactAmount.Name, &buffer)
+			if err != nil {
+				return err
+			}
+			_, err = connection.Write(buffer)
+			if err != nil {
+				return err
+			}
 
-		_, buff, err := readAll(*conn, 256)
-		if err != nil {
-			return err
-		}
-		contactName := parser.ReadTillNull(buff)
+			// Contact Name
+			contactName := contact.Name
+			err = parser.ParseString(contactName, &buffer)
+			if err != nil {
+				return err
+			}
+			_, err = connection.Write(buffer)
+			if err != nil {
+				return err
+			}
 
-		_, buff, err = readAll(*conn, 20)
-		if err != nil {
-			return err
+			// Number
+			number := contact.Number
+			err = parser.ParseLenString(number, &buffer, 20)
+			if err != nil {
+				return err
+			}
+			_, err = connection.Write(buffer)
+			if err != nil {
+				return err
+			}
+
 		}
-		number := parser.ReadTillNull(buff)
 
 	}
 
@@ -372,6 +385,6 @@ func recvClientDeleteCommand(name string, conn *net.Conn) error {
 }
 
 func recvClientListAllCommand(name string, conn *net.Conn) error {
-	// TODO: Implement 
-  return nil
+	// TODO: Implement
+	return nil
 }

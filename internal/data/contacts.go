@@ -11,7 +11,7 @@ import (
 type Contact struct {
 	Name      string
 	Number    string
-	savedTime uint32
+	SavedTime uint32
 }
 
 // Map structured with `UserName`: { ContactName: *Contact{} }
@@ -49,7 +49,7 @@ func AddContact(name string, contactName string, number string) {
 		*newCon = Contact{
 			Name:      contactName,
 			Number:    number,
-			savedTime: uint32(now),
+			SavedTime: uint32(now),
 		}
 		contactMap[contactName] = newCon
 	}
@@ -65,7 +65,7 @@ func RemoveContact(name string, contactName string) {
 	val, ok := contactMap[contactName]
 
 	if ok {
-		if val.savedTime < uint32(now) {
+		if val.SavedTime < uint32(now) {
 			delete(contactMap, contactName)
 		}
 	}
@@ -115,7 +115,7 @@ func CompareAndUpdateContact(name string, contactName string, number string, oth
 	val, exists := contactMap[contactName]
 
 	if exists {
-		if val.savedTime >= otherTime {
+		if val.SavedTime >= otherTime {
 			return
 		}
 	}
