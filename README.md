@@ -1,5 +1,15 @@
 # Golang server
 
+Servers here need a valid local DNS:
+
+```bash
+sudo bash -c 'echo "127.0.0.1 contact-server-1" >> /etc/hosts'
+sudo bash -c 'echo "127.0.0.1 contact-server-2" >> /etc/hosts'
+sudo bash -c 'echo "127.0.0.1 contact-server-3" >> /etc/hosts'
+# Or
+sudo bash -c 'echo -e "127.0.0.1 contact-server-1\n127.0.0.1 contact-server-2\n127.0.0.1 contact-server-3" >> /etc/hosts'
+```
+
 # Connection process
 
 ## On connect:

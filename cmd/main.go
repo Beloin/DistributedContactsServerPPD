@@ -68,9 +68,9 @@ func main() {
 
 	for _, serv := range otherServers {
 		hostAndPort := strings.Split(serv, ":")
-		host := hostAndPort[0]
-		port := hostAndPort[1]
-		go tcpserver.Connect(serv, port, host)
+		otherHost := hostAndPort[0]
+		otherPort := hostAndPort[1]
+		go tcpserver.Connect(otherHost, otherPort, host)
 	}
 
 	tcpserver.Listen(host, port)

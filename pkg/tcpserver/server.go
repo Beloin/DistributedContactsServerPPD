@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -25,11 +26,11 @@ func Listen(host string, port string) {
 	}
 
 	defer l.Close()
-	fmt.Println("Listening on " + addr)
+	fmt.Println("[LISTEN] Listening on " + addr)
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
+			fmt.Println("[LISTEN] Error accepting: ", err.Error())
 			os.Exit(1)
 		}
 
@@ -41,10 +42,12 @@ func Listen(host string, port string) {
 		// listenClient(clientName);
 		// listenServer(serverName);
 		// Add callbacks too?
-		addr := conn.LocalAddr().String()
+		addr := conn.RemoteAddr().String()
+		fmt.Printf("[LISTEN] Recieved connection from %s\n", addr)
+
 		read, buf, err := readAll(conn, 1)
 		if err != nil || read < 1 {
-			fmt.Println("Could not get identity from" + addr)
+			fmt.Println("[LISTEN] Could not get identity from " + addr)
 			conn.Close()
 			continue
 		}
@@ -52,14 +55,18 @@ func Listen(host string, port string) {
 		identity := buf[0]
 		read, buf, err = readAll(conn, 256)
 		if err != nil || read != 256 {
-			fmt.Println("Could not get name from" + addr)
+			fmt.Println("[LISTEN] Could not get name from " + addr)
 			conn.Close()
 			continue
 		}
 
+		fmt.Printf("[LISTEN] Handshake done with %s\n", addr)
 		name := parser.ReadTillNull(buf)
 		// Go routine to ping and other to listen
 		if identity == 1 {
+			hostAndPort := strings.Split(addr, ":")
+			otherHost, otherPort := hostAndPort[0], hostAndPort[1]
+			data.AddServer(otherHost, otherPort, name)
 			go serverLoop(name, conn)
 			go pingServerLoop(name, conn)
 		} else { // Treat if != 2?
@@ -73,7 +80,7 @@ func serverLoop(name string, conn net.Conn) {
 	for {
 		n, buff, err := readAll(conn, 1)
 		if n < 1 || err != nil {
-			fmt.Printf("[SERVER](%s) Lost connection to server\n", name)
+			fmt.Printf("[SERVER] Lost connection to server from %s\n", name)
 			data.Disconnect(name)
 			return
 		}
@@ -90,11 +97,11 @@ func serverLoop(name string, conn net.Conn) {
 		case 5:
 			err = recvServerAskForUpdateCommand(&conn)
 		default:
-			fmt.Printf("[SERVER](%s) Undefined command", name)
+			fmt.Printf("[SERVER] Undefined command from %s\n", name)
 		}
 
 		if err != nil {
-			fmt.Printf("[SERVER](%s) Lost connection to server\n", name)
+			fmt.Printf("[SERVER] Lost connection to server from %s\n", name)
 			data.Disconnect(name)
 			return
 		}
@@ -102,15 +109,16 @@ func serverLoop(name string, conn net.Conn) {
 }
 
 // Function to ping server sending heartbeat
-func pingServerLoop(name string, conn net.Conn) {
+func pingServerLoop(otherServer string, conn net.Conn) {
 	retries := 0
 	for {
+		fmt.Printf("[CONNECT] Recv Ping from %s\n", otherServer)
 		time.Sleep(time.Second * 5)
 		n, err := conn.Write([]byte{3})
 
 		if n < 1 || err != nil {
 			retries++
-			fmt.Printf("[SERVER](%s) Could not ping server\n", name)
+			fmt.Printf("[SERVER] Could not ping server %s\n", otherServer)
 
 			if retries > 3 {
 				return
@@ -120,12 +128,13 @@ func pingServerLoop(name string, conn net.Conn) {
 		}
 
 		bts := make([]byte, 4)
-		parser.Parse32Bits(clock.CurrentClock.Load(), &bts)
+		currentClock := clock.CurrentClock.Load()
+		parser.Parse32Bits(currentClock, &bts)
 		n, err = conn.Write(bts)
 
 		if n < 1 || err != nil {
 			retries++
-			fmt.Printf("[SERVER](%s) Could not ping server\n", name)
+			fmt.Printf("[SERVER] Could not ping server %s\n", otherServer)
 
 			if retries > 3 {
 				return
@@ -154,11 +163,11 @@ func clientLoop(name string, conn net.Conn) {
 		case 3:
 			err = recvClientListAllCommand(name, &conn)
 		default:
-			fmt.Printf("[CLIENT](%s) Command not implemented\n", name)
+			fmt.Printf("[CLIENT] Command not implemented from %s\n", name)
 		}
 
 		if err != nil {
-			fmt.Printf("[SERVER](%s) Lost connection to server\n", name)
+			fmt.Printf("[SERVER] Lost connection to server from %s\n", name)
 			data.Disconnect(name)
 			return
 		}
@@ -168,11 +177,9 @@ func clientLoop(name string, conn net.Conn) {
 func readAll(conn net.Conn, size int) (int, []byte, error) {
 	var received int
 
-	// buffer := bytes.NewBuffer(nil)
 	buffer := new(bytes.Buffer)
 	for {
-		// TODO: Test this
-		chunk := make([]byte, DEFAULT_BUFFER_RECV)
+		chunk := make([]byte, size)
 		read, err := conn.Read(chunk)
 		if err != nil {
 			return received, buffer.Bytes(), err
@@ -181,7 +188,7 @@ func readAll(conn net.Conn, size int) (int, []byte, error) {
 		received += read
 		buffer.Write(chunk)
 
-		if read == 0 || read < size {
+		if read == 0 || received >= size {
 			break
 		}
 	}
@@ -248,7 +255,7 @@ func recvServerPingCommand(name string, conn *net.Conn) error {
 	if err != nil {
 		return err
 	}
-	status := parser.ParseTo32Bits(buff)
+	status := buff[0]
 
 	_, buff, err = readAll(*conn, 4)
 	if err != nil {

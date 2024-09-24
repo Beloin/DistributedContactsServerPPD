@@ -39,9 +39,28 @@ func UpdateServer(host string, port string, name string, currentTime uint32) {
 			currentTime:   currentTime,
 			status:        true,
 		}
-		ContactsMap.Store(name, serverInfo)
+		ServerMap.Store(name, serverInfo)
 	}
 }
+
+func AddServer(host string, port string, name string) {
+	storedMap, exists := ContactsMap.Load(name)
+	if exists {
+		serverInfo := storedMap.(*ServerInfo)
+		serverInfo.lastHeartbeat = time.Now()
+	} else {
+		serverInfo := new(ServerInfo)
+		*serverInfo = ServerInfo{
+			lastHeartbeat: time.Now(),
+			Host:          host,
+			Port:          port,
+			currentTime:   0,
+			status:        true,
+		}
+    ServerMap.Store(name, serverInfo)
+	}
+}
+
 
 // TODO: Add client event when server Disconnect
 func Disconnect(name string) {

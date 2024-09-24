@@ -1,6 +1,9 @@
 package parser
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 func ReadTillNull(buffer []byte) string {
 	var builder strings.Builder
@@ -13,6 +16,24 @@ func ReadTillNull(buffer []byte) string {
 	}
 
 	return builder.String()
+}
+
+func ParseString(str string, buffer *[]byte) error {
+	n := len(str)
+	if n > 255 {
+		return errors.New("Length greater then 255")
+	}
+
+	var strBuilder strings.Builder
+	strBuilder.WriteString(str)
+
+	// Needs null ended string
+	for i := 255; i >= n; i-- {
+		strBuilder.WriteByte('\000')
+	}
+
+	(*buffer) = []byte(strBuilder.String())
+	return nil
 }
 
 func ParseTo32Bits(buffer []byte) uint32 {
