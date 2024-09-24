@@ -2,13 +2,13 @@ package tcpserver
 
 import (
 	"distributed_contacts_server/internal/clock"
+	"distributed_contacts_server/internal/data"
 	"distributed_contacts_server/internal/parser"
 	"fmt"
 	"net"
 	"time"
 )
 
-// TODO: Create a connection to other servers
 func Connect(host string, port string, servername string) {
 	otherName := host + ":" + port
 
@@ -19,18 +19,21 @@ func Connect(host string, port string, servername string) {
 	}
 	defer conn.Close()
 
-	initialConnectionSetup(servername, &conn, otherName)
-	fmt.Printf("[CONNECT][%s] Handshake done with %s! Connected\n", servername, otherName)
+	realServerName, err := initialConnectionSetup(servername, &conn, otherName)
+	fmt.Printf("[CONNECT][%s] Handshake done with %s! Connected with name %s\n", servername, otherName, realServerName)
 
-	initialPingServerLoop(servername, conn, otherName)
+	data.AddServer(host, port, realServerName)
+
+	// TODO: Send an ListAll request to server
+	go initialPingServerLoop(servername, conn, otherName)
+	serverLoop(realServerName, conn)
 }
 
-// TODO: Send an ListAll request to server
-func initialConnectionSetup(serverName string, conn *net.Conn, otherName string) error {
+func initialConnectionSetup(serverName string, conn *net.Conn, otherName string) (string, error) {
 	fmt.Printf("[CONNECT][%s] Handshake start with %s\n", serverName, otherName)
 	_, err := (*conn).Write([]byte{1})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var buffer []byte
@@ -40,10 +43,18 @@ func initialConnectionSetup(serverName string, conn *net.Conn, otherName string)
 	fmt.Printf("[CONNECT][%s] Sending my name to %s\n", serverName, otherName)
 	_, err = (*conn).Write(buffer)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	fmt.Printf("[CONNECT][%s] Reading other name from %s\n", serverName, otherName)
+	read, buf, err := readAll(*conn, 256)
+	if err != nil || read != 256 {
+		fmt.Printf("[CONNECT][%s] Could not get name from %s\n", serverName, otherName)
+		return "", nil
+	}
+
+	name := parser.ReadTillNull(buf)
+	return name, nil
 }
 
 // Function to ping server sending heartbeat

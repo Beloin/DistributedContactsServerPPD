@@ -25,7 +25,7 @@ type ServerInfo struct {
 var ServerMap = new(sync.Map)
 
 func UpdateServer(host string, port string, name string, currentTime uint32) {
-	storedMap, exists := ContactsMap.Load(name)
+	storedMap, exists := ServerMap.Load(name)
 	if exists {
 		serverInfo := storedMap.(*ServerInfo)
 		serverInfo.lastHeartbeat = time.Now()
@@ -44,7 +44,7 @@ func UpdateServer(host string, port string, name string, currentTime uint32) {
 }
 
 func AddServer(host string, port string, name string) {
-	storedMap, exists := ContactsMap.Load(name)
+	storedMap, exists := ServerMap.Load(name)
 	if exists {
 		serverInfo := storedMap.(*ServerInfo)
 		serverInfo.lastHeartbeat = time.Now()
@@ -64,7 +64,7 @@ func AddServer(host string, port string, name string) {
 
 // TODO: Add client event when server Disconnect
 func Disconnect(name string) {
-	storedMap, exists := ContactsMap.Load(name)
+	storedMap, exists := ServerMap.Load(name)
 	if exists {
 		serverInfo := storedMap.(*ServerInfo)
 		serverInfo.status = false
@@ -72,7 +72,7 @@ func Disconnect(name string) {
 }
 
 func Pong(name string, otherClock uint32, status bool) {
-	storedMap, exists := ContactsMap.Load(name)
+	storedMap, exists := ServerMap.Load(name)
 	if exists {
 		serverInfo := storedMap.(*ServerInfo)
 		serverInfo.lastHeartbeat = time.Now()

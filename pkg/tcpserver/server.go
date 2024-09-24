@@ -60,6 +60,17 @@ func Listen(host string, port string) {
 			continue
 		}
 
+		// TODO: After reading the other name, send also `my name`
+		fmt.Println("[LISTEN] Sending my name to " + addr)
+		var buffer []byte
+		_ = parser.ParseString(host, &buffer)
+		_, err = conn.Write(buffer)
+		if err != nil {
+      fmt.Println("[LISTEN] Could not send name to " + addr)
+			conn.Close()
+			continue
+		}
+
 		fmt.Printf("[LISTEN] Handshake done with %s\n", addr)
 		name := parser.ReadTillNull(buf)
 		// Go routine to ping and other to listen
@@ -76,15 +87,18 @@ func Listen(host string, port string) {
 }
 
 // Server loop
+// TODO: How to call this from other server in "Connect" method
 func serverLoop(name string, conn net.Conn) {
 	for {
 		n, buff, err := readAll(conn, 1)
+
 		if n < 1 || err != nil {
 			fmt.Printf("[SERVER] Lost connection to server from %s\n", name)
 			data.Disconnect(name)
 			return
 		}
 
+		fmt.Printf("[SERVER] Recv message from %s\n", name)
 		switch buff[0] {
 		case 1:
 			err = recvServerUpdateCommand(&conn)
@@ -112,10 +126,22 @@ func serverLoop(name string, conn net.Conn) {
 func pingServerLoop(otherServer string, conn net.Conn) {
 	retries := 0
 	for {
-		fmt.Printf("[CONNECT] Recv Ping from %s\n", otherServer)
 		time.Sleep(time.Second * 5)
+		fmt.Printf("[SERVER] Pinging %s\n", otherServer)
 		n, err := conn.Write([]byte{3})
 
+		if n < 1 || err != nil {
+			retries++
+			fmt.Printf("[SERVER] Could not ping server %s\n", otherServer)
+
+			if retries > 3 {
+				return
+			}
+
+			continue
+		}
+
+		n, err = conn.Write([]byte{1})
 		if n < 1 || err != nil {
 			retries++
 			fmt.Printf("[SERVER] Could not ping server %s\n", otherServer)
@@ -167,8 +193,7 @@ func clientLoop(name string, conn net.Conn) {
 		}
 
 		if err != nil {
-			fmt.Printf("[SERVER] Lost connection to server from %s\n", name)
-			data.Disconnect(name)
+			fmt.Printf("[SERVER] Lost connection to client from %s\n", name)
 			return
 		}
 	}
@@ -251,6 +276,7 @@ func recvServerDeleteCommand(conn *net.Conn) error {
 }
 
 func recvServerPingCommand(name string, conn *net.Conn) error {
+	fmt.Printf("[CONNECT] Recv Ping from %s\n", name)
 	_, buff, err := readAll(*conn, 1)
 	if err != nil {
 		return err
