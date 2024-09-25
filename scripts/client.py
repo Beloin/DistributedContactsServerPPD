@@ -7,6 +7,8 @@ SERVER_PORT = 9001  # Replace with your server's port
 CLIENT_IDENTIFIER = 2  # 1 byte for client identifier
 MAX_NAME_LENGTH = 256  # Max name length including null terminator
 
+servers = [ "contact-server-1:9000", "contact-server-2:9001", "contact-server-3:9002"]
+
 
 def convert_4bytes_to_uint32(buffer: bytes) -> int:
     # Ensure the buffer is 4 bytes long
