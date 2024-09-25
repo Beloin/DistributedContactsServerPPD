@@ -3,6 +3,7 @@ package data
 import (
 	"distributed_contacts_server/internal/clock"
 	"distributed_contacts_server/internal/parser"
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -51,6 +52,8 @@ func AddServer(host string, port string, name string, conn net.Conn) {
 	if exists {
 		serverInfo := storedMap.(*ServerInfo)
 		serverInfo.lastHeartbeat = time.Now()
+		serverInfo.status = true
+		serverInfo.conn = conn
 	} else {
 		serverInfo := new(ServerInfo)
 		*serverInfo = ServerInfo{
@@ -87,13 +90,18 @@ func Pong(name string, otherClock uint32, status bool) {
 	}
 }
 
-func Broadcast(userName string, contact *Contact) error {
+func BroadcastUpdate(userName string, contact *Contact) error {
+	fmt.Printf("[SERVER] Broadicasting %s\n", userName)
 	var err error = nil
 	var buffer []byte
 	ServerMap.Range(func(key, value any) bool {
 		server := value.(*ServerInfo)
 		if !server.status {
 			return true
+		}
+		_, err = server.conn.Write([]byte{1})
+		if err != nil {
+			return false
 		}
 
 		// Clock
@@ -140,4 +148,9 @@ func Broadcast(userName string, contact *Contact) error {
 	})
 
 	return err
+}
+
+// TODO: Return null
+func BroadcastDelete(username string, contact *Contact) error {
+	return nil
 }

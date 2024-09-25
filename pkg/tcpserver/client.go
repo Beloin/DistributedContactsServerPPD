@@ -101,5 +101,7 @@ func initialPingServerLoop(name string, conn net.Conn, otherName string) {
 			}
 
 		}
+
+		retries = 0
 	}
 }

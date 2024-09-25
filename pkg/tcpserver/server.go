@@ -69,9 +69,11 @@ func Listen(host string, port string) {
 			hostAndPort := strings.Split(addr, ":")
 			otherHost, otherPort := hostAndPort[0], hostAndPort[1]
 			data.AddServer(otherHost, otherPort, name, conn)
+			// TODO: Send a response to client so he can know there's new server
 			go serverLoop(name, conn)
 			go pingServerLoop(name, conn)
 		} else { // Treat if != 2?
+			data.AddClient(name)
 			go clientLoop(name, conn)
 		}
 	}
@@ -79,6 +81,7 @@ func Listen(host string, port string) {
 
 // Server loop
 func serverLoop(name string, conn net.Conn) {
+	fmt.Printf("[SERVER] Started server loop %s\n", name)
 	for {
 		n, buff, err := readAll(conn, 1)
 
@@ -162,10 +165,11 @@ func pingServerLoop(otherServer string, conn net.Conn) {
 
 // Client loop
 func clientLoop(name string, conn net.Conn) {
+	fmt.Printf("[CLIENT] Started Client loop for %s\n", name)
 	for {
 		n, buff, err := readAll(conn, 1)
 		if n < 1 || err != nil {
-			fmt.Printf("[CLIENT](%s) Lost connection\n", name)
+			fmt.Printf("[CLIENT] Lost connection with %s\n", name)
 			return
 		}
 
@@ -357,7 +361,7 @@ func recvClientUpdateCommand(name string, conn *net.Conn) error {
 	number := parser.ReadTillNull(buff)
 
 	newContact := data.AddContact(name, contactName, number)
-	data.Broadcast(name, newContact)
+	data.BroadcastUpdate(name, newContact)
 
 	return nil
 }

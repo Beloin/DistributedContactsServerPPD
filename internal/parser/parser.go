@@ -38,6 +38,7 @@ func ParseString(str string, buffer *[]byte) error {
 
 func ParseLenString(str string, buffer *[]byte, l int) error {
 	n := len(str)
+  l = l-1
 	if n > l{
 		return errors.New("Length greater then " + string(l))
 	}

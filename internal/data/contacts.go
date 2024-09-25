@@ -24,9 +24,9 @@ func AddClient(name string) {
 	_, l := ContactsMap.LoadOrStore(name, internalMap)
 
 	if l {
-		fmt.Println("Client re-registered: " + name)
+		fmt.Println("[SERVER] Client re-registered: " + name)
 	} else {
-		fmt.Println("New client added: " + name)
+		fmt.Println("[SERVER] New client added: " + name)
 	}
 }
 
@@ -37,6 +37,10 @@ func AddClient(name string) {
 // Adds or update contact for given UserName
 func AddContact(name string, contactName string, number string) *Contact {
 	now := clock.CurrentClock.Add(1)
+	return AddContactWithTime(name, contactName, number, now)
+}
+
+func AddContactWithTime(name string, contactName string, number string, now uint32) *Contact {
 	m, _ := ContactsMap.Load(name)
 	// TODO: Treat when there's no value for `name`
 
@@ -45,6 +49,8 @@ func AddContact(name string, contactName string, number string) *Contact {
 	val, ok := contactMap[contactName]
 	if ok {
 		val.Number = number
+		val.SavedTime = now
+		newCon = val
 	} else {
 		newCon = new(Contact)
 		*newCon = Contact{
@@ -102,7 +108,9 @@ func ListAllByName(name string) []*Contact {
 }
 
 func CompareAndUpdateContact(name string, contactName string, number string, otherTime uint32) {
-	if otherTime > clock.CurrentClock.Load() {
+	currentTime := clock.CurrentClock.Load()
+	if otherTime > currentTime {
+		currentTime = otherTime
 		clock.CurrentClock.Store(otherTime)
 	}
 
@@ -123,7 +131,7 @@ func CompareAndUpdateContact(name string, contactName string, number string, oth
 		}
 	}
 
-	AddContact(name, contactName, number)
+	AddContactWithTime(name, contactName, number, currentTime)
 }
 
 func CompareAndDeleteContact(name string, contactName string, otherTime uint32) {
