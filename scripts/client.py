@@ -42,7 +42,7 @@ def connect_to_server():
 
     input("paused: new contact")
     client_socket.sendall(bytes([1]))
-    name = "Jair Messias"
+    name = "<Messias>"
     number = "666-777-999"
     name = create_str(name)
     number = create_str(number, 20)

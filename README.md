@@ -71,21 +71,7 @@ If __My Server's__ Clock < __Other Server's__ Clock
 
 5. AskForUpdate
 
-In this scenario, __My Server__ will send all contacts with the following structure:
-
-| Name | Bytes | Example |
-| --------------- | --------------- | --------------- |
-| ContactLen | 4 | 11 |
-
-And then send for each contat a "Update" request:
-
-| Name | Bytes | Example |
-| --------------- | --------------- | --------------- |
-| Clock | 4 | 11 |
-| UserName | 256 | "Beloin" |
-| ContactName | 256 | "Juan" |
-| PhoneNumber | 20 | "85999999999" |
-
+In this scenario, __My Server__ will send all contacts using the "Update Contact" command.
 
 ### Client
 

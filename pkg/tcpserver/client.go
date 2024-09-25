@@ -26,7 +26,17 @@ func Connect(host string, port string, servername string) {
 
 	// TODO: Send an ListAll request to server
 	go initialPingServerLoop(servername, conn, otherName)
+	go askForAll(conn)
 	serverLoop(realServerName, conn)
+}
+
+func askForAll(conn net.Conn) error {
+	_, err := conn.Write([]byte{5})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func initialConnectionSetup(serverName string, conn *net.Conn, otherName string) (string, error) {

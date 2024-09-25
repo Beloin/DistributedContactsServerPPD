@@ -291,21 +291,21 @@ func recvServerPingCommand(name string, conn *net.Conn) error {
 }
 
 func recvServerAskForUpdateCommand(conn *net.Conn) error {
-	all, fullAmount := data.ListAll()
+	all, _ := data.ListAll()
 	connection := *conn
 	bts := make([]byte, 4)
-	parser.Parse32Bits(uint32(fullAmount), &bts)
-	_, err := connection.Write(bts)
-	if err != nil {
-		return err
-	}
 
 	for _, contactAmount := range all {
 		var buffer []byte
 		for _, contact := range contactAmount.Contacts {
+			_, err := connection.Write([]byte{1})
+			if err != nil {
+				return err
+			}
+
 			// Contact time
 			parser.Parse32Bits(contact.SavedTime, &bts)
-			_, err := connection.Write(bts)
+			_, err = connection.Write(bts)
 			if err != nil {
 				return err
 			}
