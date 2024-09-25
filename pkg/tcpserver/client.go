@@ -24,7 +24,6 @@ func Connect(host string, port string, servername string) {
 
 	data.AddServer(host, port, realServerName, conn)
 
-	// TODO: Send an ListAll request to server
 	go initialPingServerLoop(servername, conn, otherName)
 	go askForAll(conn)
 	serverLoop(realServerName, conn)
@@ -47,8 +46,10 @@ func initialConnectionSetup(serverName string, conn *net.Conn, otherName string)
 	}
 
 	var buffer []byte
-	// TODO: Validate error
-	_ = parser.ParseString(serverName, &buffer)
+	err = parser.ParseString(serverName, &buffer)
+	if err != nil {
+		return "", err
+	}
 
 	fmt.Printf("[CONNECT][%s] Sending my name to %s\n", serverName, otherName)
 	_, err = (*conn).Write(buffer)

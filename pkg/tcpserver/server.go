@@ -175,7 +175,6 @@ func clientLoop(name string, conn net.Conn) {
 			return
 		}
 
-		// TODO: After recv each, send for other servers the same data
 		command := buff[0]
 		switch command {
 		case 1:

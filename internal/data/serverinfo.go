@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-// TODO: Maybe use localhost and add server name?
 const (
 	SERVER_1 = "contact-server-1:9000"
 	SERVER_2 = "contact-server-2:9001"
