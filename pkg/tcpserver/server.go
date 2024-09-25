@@ -51,14 +51,16 @@ func Listen(host string, port string) {
 			continue
 		}
 
-		fmt.Println("[LISTEN] Sending my name to " + addr)
-		var buffer []byte
-		_ = parser.ParseString(host, &buffer)
-		_, err = conn.Write(buffer)
-		if err != nil {
-			fmt.Println("[LISTEN] Could not send name to " + addr)
-			conn.Close()
-			continue
+		if identity == 1 {
+			fmt.Println("[LISTEN] Sending my name to " + addr)
+			var buffer []byte
+			_ = parser.ParseString(host, &buffer)
+			_, err = conn.Write(buffer)
+			if err != nil {
+				fmt.Println("[LISTEN] Could not send name to " + addr)
+				conn.Close()
+				continue
+			}
 		}
 
 		fmt.Printf("[LISTEN] Handshake done with %s\n", addr)

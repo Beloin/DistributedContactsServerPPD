@@ -3,7 +3,7 @@ import struct
 
 # Constants
 SERVER_IP = "127.0.0.1"  # Replace with your server's IP address
-SERVER_PORT = 9001  # Replace with your server's port
+SERVER_PORT = 9000  # Replace with your server's port
 CLIENT_IDENTIFIER = 2  # 1 byte for client identifier
 MAX_NAME_LENGTH = 256  # Max name length including null terminator
 
@@ -16,7 +16,7 @@ def convert_4bytes_to_uint32(buffer: bytes) -> int:
     return struct.unpack(">I", buffer)[0]
 
 
-def create_str(msg: str, lenj = MAX_NAME_LENGTH) -> bytes:
+def create_str(msg: str, lenj=MAX_NAME_LENGTH) -> bytes:
     # Create a message with a 1-byte identifier and 256-byte null-terminated string for the client name
     encoded_name = msg.encode("utf-8")[: lenj - 1] + b"\x00"
     encoded_name = encoded_name.ljust(
@@ -40,17 +40,18 @@ def connect_to_server():
     message = create_str(client_name)
     client_socket.sendall(message)
 
-    input("paused")
+    input("paused: new contact")
     client_socket.sendall(bytes([1]))
     name = "Jair Messias"
     number = "666-777-999"
     name = create_str(name)
     number = create_str(number, 20)
-    print(len(name))
+    print("Len Name", len(name))
+    print("Len Number", len(number))
     client_socket.sendall(name)
     client_socket.sendall(number)
 
-    input("paused")
+    input("paused: List all")
     client_socket.sendall(bytes([3]))
 
     buffer = client_socket.recv(4)
