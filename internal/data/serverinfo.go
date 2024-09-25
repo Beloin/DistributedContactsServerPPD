@@ -91,7 +91,7 @@ func Pong(name string, otherClock uint32, status bool) {
 }
 
 func BroadcastUpdate(userName string, contact *Contact) error {
-	fmt.Printf("[SERVER] Broadicasting %s\n", userName)
+	fmt.Printf("[SERVER] Broadicasting Update %s\n", userName)
 	var err error = nil
 	var buffer []byte
 	ServerMap.Range(func(key, value any) bool {
@@ -150,7 +150,51 @@ func BroadcastUpdate(userName string, contact *Contact) error {
 	return err
 }
 
-// TODO: Return null
-func BroadcastDelete(username string, contact *Contact) error {
-	return nil
+func BroadcastDelete(username string, contact string) error {
+	fmt.Printf("[SERVER] Broadicasting Delete %s\n", username)
+	var err error = nil
+	var buffer []byte
+	ServerMap.Range(func(key, value any) bool {
+		server := value.(*ServerInfo)
+		if !server.status {
+			return true
+		}
+		_, err = server.conn.Write([]byte{2})
+		if err != nil {
+			return false
+		}
+
+		// Clock
+		bts := make([]byte, 4)
+		parser.Parse32Bits(clock.CurrentClock.Load(), &bts)
+		_, err = server.conn.Write(bts)
+		if err != nil {
+			return false
+		}
+
+		// Username
+		err = parser.ParseString(username, &buffer)
+		if err != nil {
+			return false
+		}
+		_, err = server.conn.Write(buffer)
+		if err != nil {
+			return false
+		}
+
+		// Contact Name
+		contactName := contact
+		err = parser.ParseString(contactName, &buffer)
+		if err != nil {
+			return false
+		}
+		_, err = server.conn.Write(buffer)
+		if err != nil {
+			return false
+		}
+
+		return true
+	})
+
+	return err
 }

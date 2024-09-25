@@ -376,6 +376,7 @@ func recvClientDeleteCommand(name string, conn *net.Conn) error {
 	contactName := parser.ReadTillNull(buff)
 
 	data.RemoveContact(name, contactName)
+	data.BroadcastDelete(name, contactName)
 
 	return nil
 }

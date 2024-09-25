@@ -3,7 +3,7 @@ import struct
 
 # Constants
 SERVER_IP = "127.0.0.1"  # Replace with your server's IP address
-SERVER_PORT = 9000  # Replace with your server's port
+SERVER_PORT = 9001  # Replace with your server's port
 CLIENT_IDENTIFIER = 2  # 1 byte for client identifier
 MAX_NAME_LENGTH = 256  # Max name length including null terminator
 
@@ -42,7 +42,7 @@ def connect_to_server():
 
     input("paused: new contact")
     client_socket.sendall(bytes([1]))
-    name = "<Messias>"
+    name = "Beloin Sena 2.0"
     number = "666-777-999"
     name = create_str(name)
     number = create_str(number, 20)
@@ -50,6 +50,29 @@ def connect_to_server():
     print("Len Number", len(number))
     client_socket.sendall(name)
     client_socket.sendall(number)
+
+    input("paused: List all")
+    client_socket.sendall(bytes([3]))
+
+    buffer = client_socket.recv(4)
+    size = convert_4bytes_to_uint32(buffer)
+    print("Amount:", size)
+    for _ in range(size):
+        buffer = client_socket.recv(256)
+        name = str(buffer)
+        buffer = client_socket.recv(20)
+        number = str(buffer)
+
+        print("Name: ", name)
+        print("Number: ", number)
+
+    input("paused: Delete")
+    client_socket.sendall(bytes([2]))
+
+    name = "Beloin Sena 2.0"
+    name = create_str(name)
+    print("Len Name", len(name))
+    client_socket.sendall(name)
 
     input("paused: List all")
     client_socket.sendall(bytes([3]))

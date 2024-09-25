@@ -74,7 +74,7 @@ func RemoveContact(name string, contactName string) {
 	val, ok := contactMap[contactName]
 
 	if ok {
-		if val.SavedTime < uint32(now) {
+		if val.SavedTime <= uint32(now) {
 			delete(contactMap, contactName)
 		}
 	}
@@ -146,9 +146,11 @@ func CompareAndDeleteContact(name string, contactName string, otherTime uint32) 
 	}
 
 	innerContacts := userMap.(map[string]*Contact)
-	_, exists = innerContacts[contactName]
+	contact, exists := innerContacts[contactName]
 	if exists {
-		delete(innerContacts, contactName)
-		ContactsMap.Store(name, innerContacts)
+		if otherTime >= contact.SavedTime {
+			delete(innerContacts, contactName)
+			ContactsMap.Store(name, innerContacts)
+		}
 	}
 }
