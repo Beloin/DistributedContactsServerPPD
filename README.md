@@ -10,6 +10,11 @@ sudo bash -c 'echo "127.0.0.1 contact-server-3" >> /etc/hosts'
 sudo bash -c 'echo -e "127.0.0.1 contact-server-1\n127.0.0.1 contact-server-2\n127.0.0.1 contact-server-3" >> /etc/hosts'
 ```
 
+# Resources
+
+Server structure:
+![server](./server_structure.png) 
+
 # Connection process
 
 ## On connect:
