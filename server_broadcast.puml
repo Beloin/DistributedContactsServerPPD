@@ -1,0 +1,15 @@
+@startuml Server_broadcast
+
+actor Client
+
+cloud Server_1
+cloud Server_2
+cloud Server_3
+
+Client --> Server_1 : Add Contact | Delete Contact
+
+
+Server_1 --> Server_2 : Broadcast Contact
+Server_1 --> Server_3 : Broadcast Contact
+
+@enduml
